@@ -45,7 +45,7 @@ void Dice::updateResult() {
 
 void Dice::Roll() {
   seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
-  snprintf(result, sizeof(result), "%d", lv_rand(1,sideCounter.GetValue()));
+  snprintf(result, sizeof(result), "%ld", lv_rand(1,sideCounter.GetValue()));
   updateResult();
   motorController.RunForDuration(30);
 }
