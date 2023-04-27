@@ -7,8 +7,9 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event);
 
 using namespace Pinetime::Applications::Screens;
 
-Dice::Dice() : Screen() {
-
+Dice::Dice(Controllers::MotionController& motionController, Controllers::Settings& settingsController, Controllers::MotorController& motorController)
+      : Screen(), motionController {motionController}, settingsController {settingsController}, motorController {motorController} 
+{
 	sideCounter.Create();
 	lv_obj_align(sideCounter.GetObject(), nullptr, LV_ALIGN_IN_LEFT_MID, 0, 0);
 
@@ -21,32 +22,32 @@ Dice::Dice() : Screen() {
 	lv_obj_set_event_cb(btnRoll, btnEventHandler);
 
 	title = lv_label_create(lv_scr_act(), nullptr);
-	lv_label_set_text_static(title, ":");
-	lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
-	//lv_label_set_align(title, LV_LABEL_ALIGN_CENTER);
-	lv_obj_align(title, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -50+(lv_obj_get_width(title)>>1), 0);
-    //lv_label_set_align(title, LV_LABEL_ALIGN_CENTER);
-	memset(result, 0, 8);
-
+  lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
+	updateResult();
 }
+
+static uint32_t seed = 0x1234ABCD; /*Seed*/
+
 uint32_t lv_rand(uint32_t min, uint32_t max)
 {
-    static uint32_t a = 0x1234ABCD; /*Seed*/
-
     /*Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs"*/
-    uint32_t x = a;
-    x ^= x << 13;
-    x ^= x >> 17;
-    x ^= x << 5;
-    a = x;
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
 
-    return (a % (max - min + 1)) + min;
+    return (seed % (max - min + 1)) + min;
 }
+
+void Dice::updateResult() {
+  lv_label_set_text_static(title, result);
+  lv_obj_align(title, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -50 + lv_obj_get_width(title) / 2, 0);
+}
+
 void Dice::Roll() {
-    uint32_t rand_num = lv_rand(1,sideCounter.GetValue());
-    snprintf(result,8, ">%d<", rand_num);
-    lv_label_set_text_static(title, result);
-	lv_obj_align(title, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -50+(lv_obj_get_width(title)>>1), 0);
+  seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
+  snprintf(result, sizeof(result), "%d", lv_rand(1,sideCounter.GetValue()));
+  updateResult();
+  motorController.RunForDuration(30);
 }
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
@@ -63,11 +64,6 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   }
 }
 
-
-
 Dice::~Dice() {
   lv_obj_clean(lv_scr_act());
 }
-
-
-
