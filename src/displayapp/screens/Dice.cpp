@@ -47,7 +47,20 @@ void Dice::Roll() {
   seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
   snprintf(result, sizeof(result), "%ld", lv_rand(1,sideCounter.GetValue()));
   updateResult();
-  motorController.RunForDuration(30);
+  
+  motorController.RunForDuration(50);
+  vTaskDelay(270);
+  motorController.RunForDuration(40);
+  vTaskDelay(200);
+  motorController.RunForDuration(20);
+  vTaskDelay(100);
+  motorController.RunForDuration(20);
+  vTaskDelay(90);
+  motorController.RunForDuration(10);
+  vTaskDelay(70);
+  motorController.RunForDuration(10);
+
+
 }
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
