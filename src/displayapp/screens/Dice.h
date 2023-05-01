@@ -16,15 +16,20 @@ namespace Pinetime {
         Dice(Controllers::MotionController& motionController, Controllers::Settings& settingsController, Controllers::MotorController& motorController);
         ~Dice() override;
 		    void Roll();
+        void Refresh() override;
       private:
         Controllers::MotionController& motionController;
         Controllers::Settings& settingsController;
         Controllers::MotorController& motorController;
         char result[4] = "-";
+        char wie_du_willst[20] = "-";
         Widgets::Counter sideCounter = Widgets::Counter(2, 20, jetbrains_mono_76);
         lv_obj_t* btnRoll;
         lv_obj_t* title;
+        lv_obj_t* dbg_shake_speed;
+        lv_task_t* refreshTask;
         void updateResult();
+        bool isRolling = false;
       };
 	  
     }

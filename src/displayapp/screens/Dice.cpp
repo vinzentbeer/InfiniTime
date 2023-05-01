@@ -23,7 +23,22 @@ Dice::Dice(Controllers::MotionController& motionController, Controllers::Setting
 
 	title = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
-	updateResult();
+	//debug
+  dbg_shake_speed = lv_label_create(lv_scr_act(), nullptr);
+  
+  updateResult();
+
+  
+
+  refreshTask = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
+}
+
+void Dice::Refresh() {
+  //if (!isRolling && (motionController.CurrentShakeSpeed() > settingsController.GetShakeThreshold())) {
+    if (!isRolling && (motionController.ShouldShakeWake(settingsController.GetShakeThreshold()))) {
+    Roll();
+  }
+  updateResult();
 }
 
 static uint32_t seed = 0x1234ABCD; /*Seed*/
@@ -41,9 +56,18 @@ uint32_t lv_rand(uint32_t min, uint32_t max)
 void Dice::updateResult() {
   lv_label_set_text_static(title, result);
   lv_obj_align(title, lv_scr_act(), LV_ALIGN_IN_RIGHT_MID, -50 + lv_obj_get_width(title) / 2, 0);
+    
+    //debug
+    snprintf(wie_du_willst, sizeof(wie_du_willst), "%ld",  motionController.CurrentShakeSpeed() + abs(motionController.X()) + abs(motionController.Y()) + abs(motionController.Z()));
+
+    lv_obj_align(dbg_shake_speed, lv_scr_act(),  LV_ALIGN_IN_TOP_RIGHT, 0, 0);
+    lv_label_set_text_static(dbg_shake_speed, wie_du_willst);
+
+
 }
 
 void Dice::Roll() {
+  isRolling = true;
   seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
   snprintf(result, sizeof(result), "%ld", lv_rand(1,sideCounter.GetValue()));
   updateResult();
@@ -59,8 +83,8 @@ void Dice::Roll() {
   motorController.RunForDuration(10);
   vTaskDelay(70);
   motorController.RunForDuration(10);
-
-
+  vTaskDelay(70);
+  isRolling = false;
 }
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
@@ -78,5 +102,6 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
 }
 
 Dice::~Dice() {
+  lv_task_del(refreshTask);
   lv_obj_clean(lv_scr_act());
 }
