@@ -490,10 +490,8 @@ list(APPEND SOURCE_FILES
         drivers/TwiMaster.cpp
 
         heartratetask/HeartRateTask.cpp
-        components/heartrate/Ppg.cpp
-        components/heartrate/Biquad.cpp
-        components/heartrate/Ptagc.cpp
         components/heartrate/HeartRateController.cpp
+        components/heartrate/Ppg.cpp
 
         buttonhandler/ButtonHandler.cpp
         touchhandler/TouchHandler.cpp
@@ -554,8 +552,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/heartrate/HeartRateController.cpp
         heartratetask/HeartRateTask.cpp
         components/heartrate/Ppg.cpp
-        components/heartrate/Biquad.cpp
-        components/heartrate/Ptagc.cpp
+
         components/motor/MotorController.cpp
         components/fs/FS.cpp
         buttonhandler/ButtonHandler.cpp
@@ -609,6 +606,7 @@ set(INCLUDE_FILES
         displayapp/screens/ApplicationList.h
         displayapp/screens/CheckboxList.h
         displayapp/Apps.h
+        displayapp/WatchFaces.h
         displayapp/screens/Notifications.h
         displayapp/screens/HeartRate.h
         displayapp/screens/Metronome.h
@@ -669,9 +667,10 @@ set(INCLUDE_FILES
         drivers/TwiMaster.h
         heartratetask/HeartRateTask.h
         components/heartrate/Ppg.h
-        components/heartrate/Biquad.h
-        components/heartrate/Ptagc.h
         components/heartrate/HeartRateController.h
+        libs/arduinoFFT-develop/src/arduinoFFT.h
+        libs/arduinoFFT-develop/src/defs.h
+        libs/arduinoFFT-develop/src/types.h
         components/motor/MotorController.h
         buttonhandler/ButtonHandler.h
         touchhandler/TouchHandler.h
