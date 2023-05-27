@@ -11,12 +11,18 @@
 namespace Pinetime {
   namespace Applications {
     namespace Screens {
+      enum State { not_rolling, rolling_soon, currently_rolling, prevent_rolling };
+
       class Dice : public Screen {
       public:
-        Dice(Controllers::MotionController& motionController, Controllers::Settings& settingsController, Controllers::MotorController& motorController);
+        Dice(Controllers::MotionController& motionController,
+             Controllers::Settings& settingsController,
+             Controllers::MotorController& motorController);
         ~Dice() override;
-		    void Roll();
+        void Roll();
         void Refresh() override;
+        State state = not_rolling;
+
       private:
         Controllers::MotionController& motionController;
         Controllers::Settings& settingsController;
@@ -31,7 +37,7 @@ namespace Pinetime {
         void updateResult();
         bool isRolling = false;
       };
-	  
+
     }
   }
 }

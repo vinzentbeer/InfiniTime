@@ -33,15 +33,44 @@ Dice::Dice(Controllers::MotionController& motionController, Controllers::Setting
   refreshTask = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
 }
 
-void Dice::Refresh() {
-  //if (!isRolling && (motionController.CurrentShakeSpeed() > settingsController.GetShakeThreshold())) {
-    if (!isRolling && (motionController.ShouldShakeWake(settingsController.GetShakeThreshold()))) {
-    Roll();
-  }
-  updateResult();
-}
+int roll_time = 0;
+int frame = 0;
+
+int rumble[][2] = {
+  {50, 270},
+  {40,200},
+  {20,100},
+  {20,90},
+  {10,70},
+  {10,70},
+};
 
 static uint32_t seed = 0x1234ABCD; /*Seed*/
+
+void Dice::Refresh() {
+  //if (!isRolling && (motionController.CurrentShakeSpeed() > settingsController.GetShakeThreshold())) {
+  if (state == not_rolling && motionController.ShouldShakeWake(settingsController.GetShakeThreshold())) {
+    state = currently_rolling;
+  }
+  if (state == currently_rolling) {
+    if (rumble[frame][1] <= roll_time) {
+      motorController.RunForDuration(rumble[frame][1]);
+      roll_time -= rumble[frame][0];
+      ++frame;
+    }
+    roll_time += 20;
+    if (frame > 6) {
+      state = not_rolling;
+      roll_time = 0;
+      frame = 0;
+    }
+    seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
+    snprintf(result, sizeof(result), "%ld", lv_rand(1,sideCounter.GetValue()));
+    updateResult();
+  }
+}
+
+
 
 uint32_t lv_rand(uint32_t min, uint32_t max)
 {
@@ -62,16 +91,12 @@ void Dice::updateResult() {
 
     lv_obj_align(dbg_shake_speed, lv_scr_act(),  LV_ALIGN_IN_TOP_RIGHT, 0, 0);
     lv_label_set_text_static(dbg_shake_speed, wie_du_willst);
-
-
 }
 
 void Dice::Roll() {
-  isRolling = true;
-  seed ^= motionController.CurrentShakeSpeed(); // inject randomness into seed
-  snprintf(result, sizeof(result), "%ld", lv_rand(1,sideCounter.GetValue()));
-  updateResult();
+  state = currently_rolling;
   
+  updateResult();
   motorController.RunForDuration(50);
   vTaskDelay(270);
   motorController.RunForDuration(40);
@@ -82,26 +107,23 @@ void Dice::Roll() {
   vTaskDelay(90);
   motorController.RunForDuration(10);
   vTaskDelay(70);
+  updateResult();
   motorController.RunForDuration(10);
-  vTaskDelay(70);
-  isRolling = false;
+  vTaskDelay(700);
+  state = not_rolling;
 }
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   auto* screen = static_cast<Dice*>(obj->user_data);
-  if (event == LV_EVENT_PRESSED) {
-    //screen->ButtonPressed();
-    	screen->Roll();
-
-  } else if (event == LV_EVENT_RELEASED || event == LV_EVENT_PRESS_LOST) {
-    //screen->MaskReset();
-
-  } else if (event == LV_EVENT_SHORT_CLICKED) {
-	
+  if (event == LV_EVENT_PRESSED && screen->state == not_rolling) {
+    	screen->state = currently_rolling;
   }
 }
 
 Dice::~Dice() {
   lv_task_del(refreshTask);
+  //necessary to prevent a crash
+  lv_label_set_text_static(title, "");
+  lv_label_set_text_static(dbg_shake_speed, "");
   lv_obj_clean(lv_scr_act());
 }
